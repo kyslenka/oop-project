@@ -1,5 +1,125 @@
 //Create the Player class
 
+class Player extends Creature {
+  constructor(name, position, board, level, items = [], gold) {
+    super(name, "imgs/player/front.png", level, items, gold);
+    this.element.setAttribute("id", "player");
+    this.name = name;
+    this.position = position;
+    this.board = board;
+    this.level = level;
+    this.items = items;
+    this.gold = gold;
+    this.attackSpeed = 2000 / level;
+    this.exp = 0;
+  }
+  render(root) {
+    this.element.style.position = "absolute";
+    this.element.style.top = this.position.row * ENTITY_SIZE + "px";
+    this.element.style.left = this.position.column * ENTITY_SIZE + "px";
+    root.appendChild(this.element);
+  }
+  update() {
+    let oldPlayer = document.getElementById("player");
+    let root = oldPlayer.parentElement;
+    root.removeChild(oldPlayer);
+    this.render(root);
+  }
+  moveToPosition(position) {
+    this.position = position;
+    this.update();
+  }
+  move(direction) {
+    let oldPositionX = this.position.row;
+    let oldPositionY = this.position.column;
+    if (direction === "ArrowDown") {
+      this.position.row = this.position.row + 1;
+      this.element.src = "imgs/player/front.png";
+    }
+    if (direction === "ArrowUp") {
+      this.position.row = this.position.row - 1;
+      this.element.src = "imgs/player/back.png";
+    }
+    if (direction === "ArrowLeft") {
+      this.position.column = this.position.column - 1;
+      this.element.src = "imgs/player/left.png";
+    }
+    if (direction === "ArrowRight") {
+      this.position.column = this.position.column + 1;
+      this.element.src = "imgs/player/right.png";
+    }
+    let entity = board.getEntity(this.position);
+    if (entity.element.src === board.rows[0][0].element.src) {
+      this.position.row = oldPositionX;
+      this.position.column = oldPositionY;
+    }
+    this.moveToPosition(this.position);
+  }
+  pickup(entity) {
+    playSound("loot");
+    if (entity instanceof Item) {
+      this.items.push(entity);
+    } else if (entity instanceof Gold) {
+      this.gold += entity.value;
+    }
+  }
+  attack(entity) {
+    super.attack(entity);
+    playSound("pattack");
+  }
+  buy(item, tradesman) {
+    if (this.gold < item.value) return false;
+    this.items.push(item);
+    this.gold -= item.value;
+    remove(tradesman.items, item);
+    tradesman.gold += item.value;
+    playSound("trade");
+    return true;
+  }
+
+  sell(item, tradesman) {
+    if (tradesman.gold < item.value) return false;
+    remove(this.items, item);
+    this.gold += item.value;
+    tradesman.items.push(item);
+    tradesman.gold -= item.value;
+    playSound("trade");
+    return true;
+  }
+
+  useItem(item, target) {
+    item.use(target);
+    remove(this.items, item);
+  }
+
+  loot(entity) {
+    this.items = this.items.concat(entity.items);
+    entity.items = [];
+    this.gold += entity.gold;
+    entity.gold = 0;
+    playSound("loot");
+  }
+  getExpToLevel() {
+    return this.level * 20;
+  }
+  getExp(entity) {
+    const exp = this.exp + entity.level * 10;
+    if (exp >= this.getExpToLevel()) {
+      this.exp = exp - this.getExpToLevel();
+      this.levelUp();
+    } else {
+      this.exp = exp;
+    }
+  }
+  levelUp() {
+    this.level++;
+    this.hp = this.getMaxHp();
+    this.strength = this.level * 10;
+    this.attackSpeed = 3000 / this.level;
+    playSound("levelup");
+  }
+}
+
 /*
 Player class definition. Player is a Creature
 - constructor

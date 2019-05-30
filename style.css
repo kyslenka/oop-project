@@ -6,7 +6,9 @@
 
 body {
   margin: 0;
-  font-family: fantasy;
+  font-family: Luminari fantasy;
+  font-weight: normal;
+  font-size: 18px;
 }
 
 #container {
@@ -34,7 +36,6 @@ body {
   height: 32px;
   object-fit: contain;
   object-position: center;
-  background: url('imgs/environment/grass1.png');
 }
 
 #action-cam {
